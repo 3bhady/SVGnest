@@ -47,65 +47,76 @@
 			y: v.y*inverse
 		};
 	}
-	
+	function _distance(A, B){
+		var a = A.x - B.x;
+		var b = A.y - B.y;
+		return Math.sqrt( a*a + b*b);
+	}
 	// returns true if p lies on the line segment defined by AB, but not at any endpoints
 	// may need work!
+	// Yes actually needs work as this can be simplified to a single line
+	// it's working now but I might be missing something.
 	function _onSegment(A,B,p){
-				
-		// vertical line
-		if(_almostEqual(A.x, B.x) && _almostEqual(p.x, A.x)){
-			if(!_almostEqual(p.y, B.y) && !_almostEqual(p.y, A.y) && p.y < Math.max(B.y, A.y) && p.y > Math.min(B.y, A.y)){
-				return true;
-			}
-			else{
-				return false;
-			}
-		}
 
-		// horizontal line
-		if(_almostEqual(A.y, B.y) && _almostEqual(p.y, A.y)){
-			if(!_almostEqual(p.x, B.x) && !_almostEqual(p.x, A.x) && p.x < Math.max(B.x, A.x) && p.x > Math.min(B.x, A.x)){
-				return true;
-			}
-			else{
-				return false;
-			}
-		}		
-		
-		//range check
-		if((p.x < A.x && p.x < B.x) || (p.x > A.x && p.x > B.x) || (p.y < A.y && p.y < B.y) || (p.y > A.y && p.y > B.y)){
-			return false;
-		}
-		
-		
-		// exclude end points
-		if((_almostEqual(p.x, A.x) && _almostEqual(p.y, A.y)) || (_almostEqual(p.x, B.x) && _almostEqual(p.y, B.y))){
-			return false;
-		}
-		
-		var cross = (p.y - A.y) * (B.x - A.x) - (p.x - A.x) * (B.y - A.y);
-		
-		if(Math.abs(cross) > TOL){
-			return false;
-		}
-		
-		var dot = (p.x - A.x) * (B.x - A.x) + (p.y - A.y)*(B.y - A.y);
-		
-		
-		
-		if(dot < 0 || _almostEqual(dot, 0)){
-			return false;
-		}
-		
-		var len2 = (B.x - A.x)*(B.x - A.x) + (B.y - A.y)*(B.y - A.y);
-		
-		
-		
-		if(dot > len2 || _almostEqual(dot, len2)){
-			return false;
-		}
-		
-		return true;
+		// I think this can be simplified to this:
+		// return _almostEqual( _distance(A,p) + _distance(B,p) , _distance(A, B));
+		return _almostEqual( _distance(A,p) + _distance(B,p) , _distance(A, B));
+
+		//
+		// // vertical line
+		// if(_almostEqual(A.x, B.x) && _almostEqual(p.x, A.x)){
+		// 	if(!_almostEqual(p.y, B.y) && !_almostEqual(p.y, A.y) && p.y < Math.max(B.y, A.y) && p.y > Math.min(B.y, A.y)){
+		// 		return true;
+		// 	}
+		// 	else{
+		// 		return false;
+		// 	}
+		// }
+		//
+		// // horizontal line
+		// if(_almostEqual(A.y, B.y) && _almostEqual(p.y, A.y)){
+		// 	if(!_almostEqual(p.x, B.x) && !_almostEqual(p.x, A.x) && p.x < Math.max(B.x, A.x) && p.x > Math.min(B.x, A.x)){
+		// 		return true;
+		// 	}
+		// 	else{
+		// 		return false;
+		// 	}
+		// }
+		//
+		// //range check
+		// if((p.x < A.x && p.x < B.x) || (p.x > A.x && p.x > B.x) || (p.y < A.y && p.y < B.y) || (p.y > A.y && p.y > B.y)){
+		// 	return false;
+		// }
+		//
+		// // Not sure why this is needed? we're already checking before it if they intersect at the endpoints.
+		// // exclude end points
+		// if((_almostEqual(p.x, A.x) && _almostEqual(p.y, A.y)) || (_almostEqual(p.x, B.x) && _almostEqual(p.y, B.y))){
+		// 	return false;
+		// }
+		//
+		// var cross = (p.y - A.y) * (B.x - A.x) - (p.x - A.x) * (B.y - A.y);
+		//
+		// if(Math.abs(cross) > TOL){
+		// 	return false;
+		// }
+		//
+		// var dot = (p.x - A.x) * (B.x - A.x) + (p.y - A.y)*(B.y - A.y);
+		//
+		//
+		//
+		// if(dot < 0 || _almostEqual(dot, 0)){
+		// 	return false;
+		// }
+		//
+		// var len2 = (B.x - A.x)*(B.x - A.x) + (B.y - A.y)*(B.y - A.y);
+		//
+		//
+		//
+		// if(dot > len2 || _almostEqual(dot, len2)){
+		// 	return false;
+		// }
+		//
+		// return true;
 	}
 	
 	// returns the intersection of AB and EF
@@ -1219,7 +1230,8 @@
 			
 			return distance;
 		},
-		
+
+		// This function is used to find starting point of NFP in case of interior NFP
 		// searches for an arrangement of A and B such that they do not overlap
 		// if an NFP is given, only search for startpoints that have not already been traversed in the given NFP
 		searchStartPoint: function(A,B,inside,NFP){
@@ -1423,7 +1435,9 @@
 			A.offsety = 0;
 			
 			var i, j;
-			
+
+			// first step of the algorithm is to translate the polygon B such that it's top point is touching the
+			// bottom point of A
 			var minA = A[0].y;
 			var minAindex = 0;
 			
@@ -1447,6 +1461,7 @@
 			}
 						
 			if(!inside){
+				// I think the following comment is wrong. It's translating top point of B to bottom point of A.
 				// shift B such that the bottom-most point of B is at the top-most point of A. This guarantees an initial placement with no intersections
 				var startpoint = {
 					x: A[minAindex].x-B[maxBindex].x,
@@ -1469,7 +1484,7 @@
 				var touching;
 				
 				var prevvector = null; // keep track of previous vector
-				var NFP = [{
+				var NFP = [{ // this is the first point in the nfp which is the starting point we'll start orbiting from it
 					x: B[0].x+B.offsetx,
 					y: B[0].y+B.offsety
 				}];
@@ -1479,19 +1494,24 @@
 				var startx = referencex;
 				var starty = referencey;
 				var counter = 0;
-				
+
+				/* We have three cases here:
+				* 1) Both edges touch at a single vertex. ( I think this single vertex belongs to each polygon )
+				* 2) A vertex of an edge in B touches the middle of an edge in A.
+				* 3) A vertex of an edge in A touches the middle of an edge in B.
+				* */
 				while(counter < 10*(A.length + B.length)){ // sanity check, prevent infinite loop
 					touching = [];
 					// find touching vertices/edges
 					for(i=0; i<A.length; i++){
-						var nexti = (i==A.length-1) ? 0 : i+1;
+						var nexti = (i==A.length-1) ? 0 : i+1; // this is to close the loop to connect last vertex to the first one creating the last edge
 						for(j=0; j<B.length; j++){
-							var nextj = (j==B.length-1) ? 0 : j+1;
+							var nextj = (j==B.length-1) ? 0 : j+1; // also closing the loop
 							if(_almostEqual(A[i].x, B[j].x+B.offsetx) && _almostEqual(A[i].y, B[j].y+B.offsety)){
-								touching.push({	type: 0, A: i, B: j });
+								touching.push({	type: 0, A: i, B: j }); // The first case both share a common vertex in each polygon
 							}
 							else if(_onSegment(A[i],A[nexti],{x: B[j].x+B.offsetx, y: B[j].y + B.offsety})){
-								touching.push({	type: 1, A: nexti, B: j });
+								touching.push({	type: 1, A: nexti, B: j }); // second case
 							}
 							else if(_onSegment({x: B[j].x+B.offsetx, y: B[j].y + B.offsety},{x: B[nextj].x+B.offsetx, y: B[nextj].y + B.offsety},A[i])){
 								touching.push({	type: 2, A: i, B: nextj });
